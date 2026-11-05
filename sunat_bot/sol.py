@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Iterator
 
 from playwright.sync_api import Browser, Frame, Locator, Page, sync_playwright
+from playwright.sync_api import Error as PWError
 from playwright.sync_api import TimeoutError as PWTimeout
 
 from . import selectores as S
@@ -93,7 +94,12 @@ class NavegadorSOL:
 
     # Pasos
     def ingresar(self, cred: CredencialSOL) -> None:
-        self.page.goto(self.sol_url, wait_until="domcontentloaded")
+        try:
+            self.page.goto(self.sol_url, wait_until="domcontentloaded")
+        except PWError as e:
+            # Error de red antes de ver el login: no se escribió la clave ni se gastó un intento.
+            raise DetenerBot(f"No se pudo abrir SOL ({str(e).splitlines()[0]}). "
+                             "No se intentó el ingreso.") from None
         self.capturar("login")  # antes de escribir nada
         alc = _alcances(self.page)
         pestana = _primero(alc, S.LOGIN_PESTANA_RUC, espera_ms=1_500)

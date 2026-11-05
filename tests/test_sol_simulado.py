@@ -73,3 +73,11 @@ def test_se_detiene(browser, url, clave, motivo):
     with pytest.raises(DetenerBot, match=motivo):
         sol.ingresar(CredencialSOL("20123456789", "BOTLECTU", clave))
     ctx.close()
+
+
+def test_error_de_red_no_intenta_ingreso(browser):
+    ctx = browser.new_context()
+    sol = NavegadorSOL(ctx.new_page(), "http://127.0.0.1:1/login.html")
+    with pytest.raises(DetenerBot, match="No se intentó el ingreso"):
+        sol.ingresar(CredencialSOL("20123456789", "BOTLECTU", "ok-x"))
+    ctx.close()

@@ -1,6 +1,6 @@
 # Bot del Buzón Electrónico SOL
 
-Estado: esqueleto funcional, probado solo contra un portal SOL **simulado**. Los selectores del portal real están sin verificar y se ajustan en la primera corrida con `--explorar`.
+Estado: la parte de correo (`alertas` y `resumen`) funciona con datos reales. La lectura automática de SOL (`revisar`) está **en pausa**: el 5/11/2026 el servidor de SOL cortó la conexión al navegador automático (ERR_CONNECTION_RESET) mientras cargaba normal en un navegador común. No se intentará pasar ese filtro. Por decisión de Dario, el buzón se revisa a mano a partir del resumen.
 
 ## Qué hace
 
@@ -32,6 +32,7 @@ cp .env.example .env             # y completa .env con tus datos; nunca lo subas
 ## Uso
 
 ```bash
+python -m sunat_bot resumen --dias 30      # uso diario: urgencias y tabla por empresa, guardado en <salida>/resumen-AAAA-MM-DD.md
 python -m sunat_bot alertas --dias 7
 python -m sunat_bot revisar --ruc 20XXXXXXXXX --explorar --ver --solo-listar   # primera corrida
 python -m sunat_bot revisar --desde-correo                                     # uso diario

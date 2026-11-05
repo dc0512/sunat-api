@@ -63,6 +63,13 @@ class Almacen:
         ).fetchall()
         return [f[0] for f in filas]
 
+    def alertas_desde(self, desde_iso: str) -> list[AlertaCorreo]:
+        filas = self.db.execute(
+            "SELECT message_id, ruc, fecha, remitente, asunto, tipo, razon_social, documento,"
+            " fecha_limite FROM alertas WHERE fecha >= ? ORDER BY fecha", (desde_iso,)
+        ).fetchall()
+        return [AlertaCorreo(*f) for f in filas]
+
     def marcar_alertas_revisadas(self, ruc: str) -> None:
         self.db.execute("UPDATE alertas SET revisada = 1 WHERE ruc = ?", (ruc,))
         self.db.commit()

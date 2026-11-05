@@ -3,6 +3,9 @@
   python -m sunat_bot alertas [--dias 7]
       Lee las alertas de SUNAT del correo (IMAP) y las muestra por empresa. No entra a SOL.
 
+  python -m sunat_bot resumen [--dias 30]
+      Resumen por empresa con las urgencias primero (coactivas, fechas límite). Lo guarda en un .md.
+
   python -m sunat_bot revisar [--ruc RUC ...] [--desde-correo] [--solo-listar] [--explorar] [--ver]
       Entra al buzón SOL de cada empresa, abre los mensajes nuevos y descarga su contenido.
 """
@@ -40,6 +43,29 @@ def cmd_alertas(cfg: cfgmod.Config, args: argparse.Namespace) -> int:
     if pendientes:
         print("\nEmpresas con alertas sin revisar en el buzón:", ", ".join(pendientes))
     almacen.cerrar()
+    return 0
+
+
+def cmd_resumen(cfg: cfgmod.Config, args: argparse.Namespace) -> int:
+    from datetime import date, datetime, timedelta, timezone
+
+    from .resumen import armar_resumen
+
+    almacen = Almacen(cfg.base_datos)
+    if cfg.imap and not args.sin_correo:
+        for a in leer_alertas_imap(cfg.imap, dias=args.dias):
+            almacen.guardar_alerta(a)
+    desde = (datetime.now(timezone.utc) - timedelta(days=args.dias)).date().isoformat()
+    alertas = almacen.alertas_desde(desde)
+    almacen.cerrar()
+    rucs_con_sol = {r for r in {a.ruc for a in alertas} | set(cfg.rucs) if cfg.credencial_sol(r)}
+    hoy = date.today()
+    texto = armar_resumen(alertas, hoy, rucs_con_sol)
+    destino = cfg.salida / f"resumen-{hoy.isoformat()}.md"
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(texto + "\n", encoding="utf-8")
+    print(texto)
+    print(f"\nGuardado en {destino}")
     return 0
 
 
@@ -107,6 +133,10 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("alertas", help="leer alertas de SUNAT en el correo")
     a.add_argument("--dias", type=int, default=7)
 
+    s = sub.add_parser("resumen", help="resumen por empresa con urgencias (lee el correo antes)")
+    s.add_argument("--dias", type=int, default=30)
+    s.add_argument("--sin-correo", action="store_true", help="usar solo lo ya guardado, sin leer el correo")
+
     r = sub.add_parser("revisar", help="entrar al buzón SOL y descargar mensajes nuevos")
     r.add_argument("--ruc", action="append", help="revisar solo este RUC (se puede repetir)")
     r.add_argument("--desde-correo", action="store_true",
@@ -125,6 +155,8 @@ def main(argv: list[str] | None = None) -> int:
     cfg = cfgmod.desde_entorno()
     if args.comando == "alertas":
         return cmd_alertas(cfg, args)
+    if args.comando == "resumen":
+        return cmd_resumen(cfg, args)
     return cmd_revisar(cfg, args)
 
 

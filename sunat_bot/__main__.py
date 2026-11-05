@@ -51,8 +51,12 @@ def cmd_resumen(cfg: cfgmod.Config, args: argparse.Namespace) -> int:
 
     from .resumen import armar_resumen
 
+    if not cfg.imap and not args.sin_correo:
+        print("Falta SUNAT_IMAP_USUARIO y SUNAT_IMAP_CLAVE en el .env: no se puede leer el correo."
+              " Usa --sin-correo para resumir solo lo ya guardado.", file=sys.stderr)
+        return 2
     almacen = Almacen(cfg.base_datos)
-    if cfg.imap and not args.sin_correo:
+    if not args.sin_correo:
         for a in leer_alertas_imap(cfg.imap, dias=args.dias):
             almacen.guardar_alerta(a)
     desde = (datetime.now(timezone.utc) - timedelta(days=args.dias)).date().isoformat()

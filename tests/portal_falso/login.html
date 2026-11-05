@@ -1,0 +1,17 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>SOL simulado</title>
+<body>
+<!-- Portal simulado para pruebas. No reproduce el diseño real de SUNAT. -->
+<form id="f" onsubmit="return false">
+  <input id="txtRuc" placeholder="RUC"><input id="txtUsuario" placeholder="Usuario">
+  <input id="txtContrasena" type="password"><button id="btnAceptar">Iniciar sesión</button>
+</form>
+<p id="msg"></p>
+<script>
+document.getElementById('btnAceptar').onclick = () => {
+  const clave = document.getElementById('txtContrasena').value;
+  if (clave === 'captcha') location.href = 'captcha.html';
+  else if (clave === 'codigo') document.body.innerHTML = '<p>Ingrese el código de verificación enviado a su correo</p><input id="otp">';
+  else if (clave.startsWith('ok-') && document.getElementById('txtRuc').value === '20123456789') location.href = 'menu.html';
+  else document.getElementById('msg').textContent = 'Usuario o clave incorrectos';
+};
+</script></body></html>

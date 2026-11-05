@@ -58,3 +58,16 @@ def test_ignora_remitentes_ajenos():
 
 def test_clasificar_deuda():
     assert clasificar("Alerta SUNAT notificación de deuda") == "deuda"
+
+
+def test_clasifica_otros_asuntos():
+    assert clasificar("Alerta SUNAT inicio de acciones de Cobranza") == "cobranza"
+    assert clasificar("Fraccionamiento") == "fraccionamiento"
+    assert clasificar("Comunicaciones Inductivas a los omisos") == "declaracion"
+    assert clasificar("Comunicación Preventiva Declaración Mensual IGV- RENTA FV 621– Periodo 09-2026") == "declaracion"
+
+
+def test_razon_social_vacia_no_toma_la_linea_siguiente():
+    cuerpo = "Señor/a:\n\nRazón Social:\n\nNÚMERO DE\nRUC: 20123456789\n"
+    a = interpretar_alerta("id5", "cobranzasunat14@sunat.gob.pe", "Alerta SUNAT notificación de deuda", "", cuerpo)
+    assert a.ruc == "20123456789" and a.razon_social == ""

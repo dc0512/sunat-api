@@ -30,3 +30,15 @@ def test_resumen_ordena_y_deduplica():
     assert urg.count("111") == 1
     assert "| 20123456789 | EMPRESA | 2 | buzon 1, coactiva 1 | 2026-11-04 | sí |" in txt
     assert "| no |" in txt
+
+
+def test_tabla_usa_la_razon_social_valida_mas_comun():
+    alertas = [
+        _a("10987654321", "buzon", mid="a"),
+        _a("10987654321", "cobranza", mid="b", fecha="2026-11-03T10:00"),
+    ]
+    alertas[0].razon_social = "PERSONA DE PRUEBA"
+    alertas[1].razon_social = "NÚMERO DE"
+    txt = armar_resumen(alertas, HOY)
+    assert "| 10987654321 | PERSONA DE PRUEBA |" in txt
+    assert "inicio de acciones de cobranza" in txt

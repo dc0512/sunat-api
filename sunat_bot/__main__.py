@@ -19,7 +19,7 @@ from pathlib import Path
 
 from . import config as cfgmod
 from .almacen import Almacen
-from .correo import leer_alertas_imap
+from .correo import clasificar, leer_alertas_imap
 
 
 def _carpeta_segura(texto: str) -> str:
@@ -58,6 +58,8 @@ def cmd_resumen(cfg: cfgmod.Config, args: argparse.Namespace) -> int:
     desde = (datetime.now(timezone.utc) - timedelta(days=args.dias)).date().isoformat()
     alertas = almacen.alertas_desde(desde)
     almacen.cerrar()
+    for a in alertas:  # reclasifica lo guardado con las reglas actuales
+        a.tipo = clasificar(a.asunto)
     rucs_con_sol = {r for r in {a.ruc for a in alertas} | set(cfg.rucs) if cfg.credencial_sol(r)}
     hoy = date.today()
     texto = armar_resumen(alertas, hoy, rucs_con_sol)

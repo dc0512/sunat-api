@@ -23,7 +23,7 @@ from .config import CredencialIMAP
 from .modelo import AlertaCorreo
 
 RE_RUC = re.compile(r"RUC\s*(?:N\s*[°º.o]?\s*)?:?\s*(\d{11})\b", re.IGNORECASE)
-RE_RAZON_EXPLICITA = re.compile(r"Raz[oó]n Social:\s*(.+)", re.IGNORECASE)
+RE_RAZON_EXPLICITA = re.compile(r"Raz[oó]n Social:[ \t]*([^\n|]*)", re.IGNORECASE)
 RE_DOCUMENTO = re.compile(
     r"(?:Resoluci[oó]n|Orden de Pago|Valor|Esquela|Requerimiento)[^\n]{0,80}?N\s*\.?\s*[°º]\s*(\d{6,})",
     re.IGNORECASE,
@@ -43,13 +43,31 @@ def clasificar(asunto: str) -> str:
     a = _normalizar(asunto)
     if "coactiva" in a:
         return "coactiva"
+    if "cobranza" in a:
+        return "cobranza"
+    if "fraccionamiento" in a:
+        return "fraccionamiento"
     if "deuda" in a:
         return "deuda"
+    if "omiso" in a or "declaracion" in a:
+        return "declaracion"
     if "sine" in a:
         return "sine"
     if "buzn" in a or "buzon" in a:
         return "buzon"
     return "otro"
+
+
+RE_NO_ES_RAZON = re.compile(r"\bRUC\b|n[uú]mero de|estimad|señor|contribuyente|http|@|para asegurar",
+                            re.IGNORECASE)
+
+
+def razon_valida(texto: str) -> str:
+    """Devuelve la razón social limpia o "" si el texto no parece una."""
+    t = " ".join(texto.strip(" |:\t").split())
+    if len(t) < 3 or RE_NO_ES_RAZON.search(t):
+        return ""
+    return t
 
 
 def es_de_sunat(remitente: str) -> bool:
@@ -69,12 +87,12 @@ def interpretar_alerta(message_id: str, remitente: str, asunto: str, fecha: str,
     razon = ""
     m_razon = RE_RAZON_EXPLICITA.search(cuerpo)
     if m_razon:
-        razon = m_razon.group(1).strip()
-    else:
-        # La razón social viene en la línea no vacía anterior a "RUC N°..."
-        previas = [l.strip(" |") for l in cuerpo[: m.start()].splitlines() if l.strip(" |")]
-        if previas and not previas[-1].lower().startswith(("para asegurar", "http")):
-            razon = previas[-1]
+        razon = razon_valida(m_razon.group(1))
+    if not razon:
+        # La razón social suele venir en la línea no vacía anterior a "RUC N°..."
+        previas = [l for l in cuerpo[: m.start()].splitlines() if l.strip(" |")]
+        if previas:
+            razon = razon_valida(previas[-1])
 
     documento = ""
     m_doc = RE_DOCUMENTO.search(cuerpo)

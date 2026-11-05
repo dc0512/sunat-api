@@ -1,10 +1,11 @@
 """Resumen de alertas por empresa, con las urgencias primero."""
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime
 
 from .config import SOL_URL_POR_DEFECTO
+from .correo import razon_valida
 from .modelo import AlertaCorreo
 
 
@@ -29,6 +30,8 @@ def urgencia(a: AlertaCorreo, hoy: date) -> tuple[int, str]:
         return 4, f"vence el {a.fecha_limite}"
     if a.tipo == "coactiva":
         return 3, "cobranza coactiva sin fecha en el correo"
+    if a.tipo == "cobranza":
+        return 3, "inicio de acciones de cobranza"
     return 9, ""
 
 
@@ -50,7 +53,7 @@ def armar_resumen(alertas: list[AlertaCorreo], hoy: date, rucs_con_sol: set[str]
                 continue
             vistos.add(clave)
             doc = f", documento {a.documento}" if a.documento else ""
-            lineas.append(f"- **{a.ruc}** {a.razon_social}: {a.tipo}{doc}, {etiqueta}")
+            lineas.append(f"- **{a.ruc}** {razon_valida(a.razon_social)}: {a.tipo}{doc}, {etiqueta}")
         lineas.append("")
 
     por_ruc: dict[str, list[AlertaCorreo]] = defaultdict(list)
@@ -60,8 +63,8 @@ def armar_resumen(alertas: list[AlertaCorreo], hoy: date, rucs_con_sol: set[str]
     lineas += ["## Por empresa", "", "| RUC | Empresa | Alertas | Tipos | Última | Usuario SOL |",
                "|---|---|---:|---|---|---|"]
     for ruc, lista in sorted(por_ruc.items(), key=lambda x: max(a.fecha for a in x[1]), reverse=True):
-        razon = next((a.razon_social for a in sorted(lista, key=lambda a: a.fecha, reverse=True)
-                      if a.razon_social), "")
+        nombres = Counter(r for a in lista if (r := razon_valida(a.razon_social)))
+        razon = nombres.most_common(1)[0][0] if nombres else ""
         tipos: dict[str, int] = defaultdict(int)
         for a in lista:
             tipos[a.tipo] += 1

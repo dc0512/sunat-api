@@ -1,0 +1,21 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><body>
+<ul id="listaMensajes">
+  <li data-id-mensaje="M001" class="no-leido"><span class="fecha">03/11/2026 10:15</span> <a class="asunto" href="#">Resolución de Ejecución Coactiva N.º 0000000000001</a></li>
+  <li data-id-mensaje="M002"><span class="fecha">28/10/2026 16:40</span> <a class="asunto" href="#">Orden de Pago N.º 0230000000002</a></li>
+</ul>
+<div id="detalleMensaje" hidden>
+  <p id="texto"></p>
+  <a id="pdf" href="notificacion.pdf" download>Descargar</a>
+  <button id="btnVolver">Volver</button>
+</div>
+<script>
+const lista = document.getElementById('listaMensajes'), det = document.getElementById('detalleMensaje');
+lista.querySelectorAll('a.asunto').forEach(a => a.onclick = e => {
+  e.preventDefault();
+  const li = a.closest('li'); li.classList.remove('no-leido');
+  document.getElementById('texto').textContent = 'Contenido completo de ' + a.textContent;
+  document.getElementById('pdf').setAttribute('download', li.dataset.idMensaje + '.pdf');
+  lista.hidden = true; det.hidden = false;
+});
+document.getElementById('btnVolver').onclick = () => { det.hidden = true; lista.hidden = false; };
+</script></body></html>

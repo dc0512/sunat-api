@@ -44,6 +44,15 @@ def armar_resumen(alertas: list[AlertaCorreo], hoy: date, rucs_con_sol: set[str]
         ((urgencia(a, hoy), a) for a in alertas if urgencia(a, hoy)[0] < 9),
         key=lambda x: (x[0][0], x[1].fecha_limite, x[1].ruc),
     )
+    nombres_por_ruc: dict[str, Counter] = defaultdict(Counter)
+    for a in alertas:
+        if r := razon_valida(a.razon_social):
+            nombres_por_ruc[a.ruc][r] += 1
+
+    def nombre(ruc: str) -> str:
+        c = nombres_por_ruc.get(ruc)
+        return c.most_common(1)[0][0] if c else ""
+
     vistos = set()
     if urgentes:
         lineas += ["## Urgente", ""]
@@ -53,7 +62,7 @@ def armar_resumen(alertas: list[AlertaCorreo], hoy: date, rucs_con_sol: set[str]
                 continue
             vistos.add(clave)
             doc = f", documento {a.documento}" if a.documento else ""
-            lineas.append(f"- **{a.ruc}** {razon_valida(a.razon_social)}: {a.tipo}{doc}, {etiqueta}")
+            lineas.append(f"- **{a.ruc}** {nombre(a.ruc)}: {a.tipo}{doc}, {etiqueta}")
         lineas.append("")
 
     por_ruc: dict[str, list[AlertaCorreo]] = defaultdict(list)
@@ -63,8 +72,7 @@ def armar_resumen(alertas: list[AlertaCorreo], hoy: date, rucs_con_sol: set[str]
     lineas += ["## Por empresa", "", "| RUC | Empresa | Alertas | Tipos | Última | Usuario SOL |",
                "|---|---|---:|---|---|---|"]
     for ruc, lista in sorted(por_ruc.items(), key=lambda x: max(a.fecha for a in x[1]), reverse=True):
-        nombres = Counter(r for a in lista if (r := razon_valida(a.razon_social)))
-        razon = nombres.most_common(1)[0][0] if nombres else ""
+        razon = nombre(ruc)
         tipos: dict[str, int] = defaultdict(int)
         for a in lista:
             tipos[a.tipo] += 1

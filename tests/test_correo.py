@@ -71,3 +71,7 @@ def test_razon_social_vacia_no_toma_la_linea_siguiente():
     cuerpo = "Señor/a:\n\nRazón Social:\n\nNÚMERO DE\nRUC: 20123456789\n"
     a = interpretar_alerta("id5", "cobranzasunat14@sunat.gob.pe", "Alerta SUNAT notificación de deuda", "", cuerpo)
     assert a.ruc == "20123456789" and a.razon_social == ""
+
+
+def test_deuda_cobranza_es_deuda():
+    assert clasificar("DEUDA_COBRANZA") == "deuda"

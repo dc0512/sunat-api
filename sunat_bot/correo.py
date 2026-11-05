@@ -41,14 +41,17 @@ def _normalizar(texto: str) -> str:
 
 def clasificar(asunto: str) -> str:
     a = _normalizar(asunto)
+    a = a.replace("_", " ")
     if "coactiva" in a:
         return "coactiva"
-    if "cobranza" in a:
+    if "acciones de cobranza" in a:
         return "cobranza"
     if "fraccionamiento" in a:
         return "fraccionamiento"
-    if "deuda" in a:
+    if "deuda" in a:  # incluye "DEUDA_COBRANZA", que es un aviso de deuda
         return "deuda"
+    if "cobranza" in a:
+        return "cobranza"
     if "omiso" in a or "declaracion" in a:
         return "declaracion"
     if "sine" in a:

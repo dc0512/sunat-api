@@ -42,3 +42,12 @@ def test_tabla_usa_la_razon_social_valida_mas_comun():
     txt = armar_resumen(alertas, HOY)
     assert "| 10987654321 | PERSONA DE PRUEBA |" in txt
     assert "inicio de acciones de cobranza" in txt
+
+
+def test_urgente_usa_el_nombre_de_otra_alerta_del_mismo_ruc():
+    a1 = _a("20123456789", "buzon", mid="a")
+    a1.razon_social = "EMPRESA REAL S.A.C."
+    a2 = _a("20123456789", "cobranza", mid="b")
+    a2.razon_social = ""
+    txt = armar_resumen([a1, a2], HOY)
+    assert "**20123456789** EMPRESA REAL S.A.C.: cobranza" in txt

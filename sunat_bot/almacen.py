@@ -70,6 +70,13 @@ class Almacen:
         ).fetchall()
         return [AlertaCorreo(*f) for f in filas]
 
+    def corregir_alerta(self, message_id: str, tipo: str, razon_social: str) -> None:
+        self.db.execute("UPDATE alertas SET tipo = ?, razon_social = ? WHERE message_id = ?",
+                        (tipo, razon_social, message_id))
+
+    def guardar_cambios(self) -> None:
+        self.db.commit()
+
     def marcar_alertas_revisadas(self, ruc: str) -> None:
         self.db.execute("UPDATE alertas SET revisada = 1 WHERE ruc = ?", (ruc,))
         self.db.commit()

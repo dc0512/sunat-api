@@ -5,3 +5,8 @@
 salida/
 __pycache__/
 .pytest_cache/
+.venv/
+files/
+resumen-*.md
+ultimo-resumen.txt
+*.log
